@@ -43,8 +43,50 @@
     body{
       margin:0;
       font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
-      background: radial-gradient(1200px 900px at 15% 10%, #1a2b64 0%, var(--bg) 52%) fixed;
       color:var(--text);
+      background: #070a14;
+      overflow-x: hidden;
+    }
+
+    /* Animated gradient mesh background */
+    .bgMesh{
+      position: fixed;
+      inset: 0;
+      z-index: -3;
+      background:
+        radial-gradient(900px 600px at 15% 20%, rgba(176,38,255,0.30), transparent 60%),
+        radial-gradient(900px 700px at 85% 15%, rgba(47,123,246,0.26), transparent 62%),
+        radial-gradient(900px 700px at 20% 85%, rgba(34,197,94,0.20), transparent 62%),
+        radial-gradient(1200px 900px at 70% 80%, rgba(0,0,0,0.75), rgba(7,10,20,1) 60%);
+      filter: saturate(1.15) contrast(1.05);
+      animation: meshShift 14s ease-in-out infinite alternate;
+    }
+    @keyframes meshShift{
+      0%{ transform: translate3d(0,0,0) scale(1.02); filter: saturate(1.1) contrast(1.02); }
+      100%{ transform: translate3d(0,-10px,0) scale(1.06); filter: saturate(1.25) contrast(1.08); }
+    }
+
+    /* Subtle grid overlay for blockchain/matrix feel */
+    .gridOverlay{
+      position: fixed;
+      inset: 0;
+      z-index: -2;
+      pointer-events:none;
+      background-image:
+        linear-gradient(rgba(255,255,255,0.05) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.05) 1px, transparent 1px);
+      background-size: 46px 46px;
+      opacity: 0.10;
+      mask-image: radial-gradient(circle at 50% 20%, rgba(0,0,0,1), rgba(0,0,0,0.20) 60%, rgba(0,0,0,0) 78%);
+    }
+
+    /* Floating particle dots */
+    #particles{
+      position: fixed;
+      inset: 0;
+      z-index: -1;
+      pointer-events: none;
+      opacity: 0.65;
     }
 
     .wrap{ max-width:1200px; margin:0 auto; padding:22px 16px 34px; }
@@ -104,30 +146,50 @@
     }
 
     .card{
-      background: linear-gradient(180deg, rgba(255,255,255,0.07), rgba(255,255,255,0.045));
-      border: 1px solid var(--border);
-      border-radius: 14px;
+      /* Glassmorphism */
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 16px;
       box-shadow: var(--shadow);
       padding: 14px;
       overflow:hidden;
       position: relative;
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
     }
 
-    /* KPI accents */
+    .card:after{
+      content:"";
+      position:absolute;
+      inset:0;
+      border-radius:16px;
+      pointer-events:none;
+      box-shadow: 0 0 0 1px rgba(255,255,255,0.06) inset;
+      opacity: 0.85;
+    }
+
+    /* KPI accents + pulsing borders */
     .kpi{ position: relative; }
     .kpi:before{
       content:"";
       position:absolute;
       inset: 0;
-      border-radius: 14px;
+      border-radius: 16px;
       pointer-events:none;
-      opacity: 0.18;
+      opacity: 0.55;
       filter: blur(0px);
+      animation: pulseBorder 2.8s ease-in-out infinite;
     }
-    .kpi:nth-of-type(1):before{ box-shadow: 0 0 0 1px rgba(34,197,94,0.35) inset, 0 0 26px rgba(34,197,94,0.18); }
-    .kpi:nth-of-type(2):before{ box-shadow: 0 0 0 1px rgba(47,123,246,0.35) inset, 0 0 26px rgba(47,123,246,0.18); }
-    .kpi:nth-of-type(3):before{ box-shadow: 0 0 0 1px rgba(176,38,255,0.35) inset, 0 0 26px rgba(176,38,255,0.18); }
-    .kpi:nth-of-type(4):before{ box-shadow: 0 0 0 1px rgba(255,214,10,0.35) inset, 0 0 26px rgba(255,214,10,0.16); }
+    @keyframes pulseBorder{
+      0%{ opacity:0.35; }
+      50%{ opacity:0.80; }
+      100%{ opacity:0.35; }
+    }
+
+    .kpi:nth-of-type(1):before{ box-shadow: 0 0 0 1px rgba(34,197,94,0.55) inset, 0 0 34px rgba(34,197,94,0.22); }
+    .kpi:nth-of-type(2):before{ box-shadow: 0 0 0 1px rgba(47,123,246,0.55) inset, 0 0 34px rgba(47,123,246,0.22); }
+    .kpi:nth-of-type(3):before{ box-shadow: 0 0 0 1px rgba(176,38,255,0.55) inset, 0 0 34px rgba(176,38,255,0.22); }
+    .kpi:nth-of-type(4):before{ box-shadow: 0 0 0 1px rgba(255,214,10,0.55) inset, 0 0 34px rgba(255,214,10,0.20); }
 
     .card h2{
       font-size:13px;
@@ -292,6 +354,10 @@
   </style>
 </head>
 <body>
+  <div class="bgMesh"></div>
+  <div class="gridOverlay"></div>
+  <canvas id="particles"></canvas>
+
   <div class="wrap">
     <div class="topbar">
       <div>
@@ -351,6 +417,14 @@
         </div>
       </div>
 
+      <div class="card tasks" style="grid-column: span 12;">
+        <h2>Completed tasks (recent)</h2>
+        <div class="taskGrid" id="completedBoard"></div>
+        <div class="footer">
+          Source: <code>GET /tasks?status=Completed</code>
+        </div>
+      </div>
+
       <div class="card leaderboard">
         <h2>Agent leaderboard (tasks completed)</h2>
         <table class="table" id="agentTable">
@@ -379,13 +453,29 @@
 
   <script>
     // NOTE: api.0xwork.org may not allow browser-side CORS from GitHub Pages.
-    // We route requests through a simple CORS proxy.
-    const CORS_PROXY = 'https://corsproxy.io/?url=';
+    // We route requests through a CORS proxy.
+    // Tested:
+    // - corsproxy.io returns real JSON directly ✅
+    // - allorigins.win wraps JSON in { contents: "..." } ✅ (we support it as fallback)
+    // - thingproxy.freeboard.io not resolvable ❌
+
+    const PROXIES = {
+      corsproxy: (url) => `https://corsproxy.io/?url=${encodeURIComponent(url)}`,
+      allorigins: (url) => `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`,
+    };
+
+    const API_RAW = {
+      tasks: 'https://api.0xwork.org/tasks',
+      tasksCompleted: 'https://api.0xwork.org/tasks?status=Completed',
+      agents: 'https://api.0xwork.org/agents',
+      stats: 'https://api.0xwork.org/stats',
+    };
+
     const API = {
-      tasks: CORS_PROXY + encodeURIComponent('https://api.0xwork.org/tasks'),
-      tasksCompleted: CORS_PROXY + encodeURIComponent('https://api.0xwork.org/tasks?status=Completed'),
-      agents: CORS_PROXY + encodeURIComponent('https://api.0xwork.org/agents'),
-      stats: CORS_PROXY + encodeURIComponent('https://api.0xwork.org/stats'),
+      tasks: PROXIES.corsproxy(API_RAW.tasks),
+      tasksCompleted: PROXIES.corsproxy(API_RAW.tasksCompleted),
+      agents: PROXIES.corsproxy(API_RAW.agents),
+      stats: PROXIES.corsproxy(API_RAW.stats),
     };
 
     const $ = (id) => document.getElementById(id);
@@ -404,12 +494,31 @@
       try{ return JSON.parse(v); } catch { return null; }
     }
 
+    function unwrapProxyJson(obj){
+      // allorigins returns { contents: "<stringified json>" }
+      if (obj && typeof obj === 'object' && typeof obj.contents === 'string') {
+        try { return JSON.parse(obj.contents); } catch { return obj.contents; }
+      }
+      return obj;
+    }
+
     async function fetchJson(url){
       const r = await fetch(url, { headers: { 'accept': 'application/json' } });
       if (!r.ok) throw new Error(`${url} -> HTTP ${r.status}`);
-      // Some proxies may return text; try JSON parse.
       const txt = await r.text();
-      try { return JSON.parse(txt); } catch { return txt; }
+      let parsed;
+      try { parsed = JSON.parse(txt); } catch { return txt; }
+      return unwrapProxyJson(parsed);
+    }
+
+    async function fetchJsonWithFallback(rawUrl){
+      // Try corsproxy first, then allorigins.
+      try {
+        return await fetchJson(PROXIES.corsproxy(rawUrl));
+      } catch (e1) {
+        const d = await fetchJson(PROXIES.allorigins(rawUrl));
+        return d;
+      }
     }
 
     function setError(msg){
@@ -593,7 +702,7 @@
 
         const border = catColor(cat);
         return `
-          <div class="taskCard" style="border-left-color: ${border}; box-shadow: 0 0 0 1px rgba(255,255,255,0.06) inset, 0 0 22px rgba(0,0,0,0.25);">
+          <div class="taskCard" style="border-left-color: ${border}; box-shadow: 0 0 0 1px rgba(255,255,255,0.06) inset, 0 0 22px rgba(0,0,0,0.25), 0 0 26px color-mix(in srgb, ${border} 24%, transparent);">
             <div class="taskTop">
               <div style="min-width:0;">
                 <div class="taskTitle">${title.replaceAll('<','&lt;').replaceAll('>','&gt;')}</div>
@@ -618,16 +727,58 @@
       }).join('');
     }
 
+    function renderCompletedBoard(completedTasks){
+      const board = $('completedBoard');
+      if (!board) return;
+      if (!completedTasks.length){
+        board.innerHTML = `<div class="muted">No completed tasks returned.</div>`;
+        return;
+      }
+
+      const sorted = [...completedTasks].sort((a,b)=> (b.bounty-a.bounty));
+      board.innerHTML = sorted.slice(0, 12).map(t => {
+        const url = `https://0xwork.org/tasks/${t.dbId}`;
+        const { title } = extractTitleAndFollowerReq(t);
+        const cat = t.category || 'Unknown';
+        const border = catColor(cat);
+        const worker = t.worker ? `${String(t.worker).slice(0,6)}…${String(t.worker).slice(-4)}` : '—';
+
+        return `
+          <div class="taskCard" style="border-left-color: ${border}; box-shadow: 0 0 0 1px rgba(255,255,255,0.06) inset, 0 0 22px rgba(0,0,0,0.25), 0 0 26px color-mix(in srgb, ${border} 22%, transparent);">
+            <div class="taskTop">
+              <div style="min-width:0;">
+                <div class="taskTitle">${title.replaceAll('<','&lt;').replaceAll('>','&gt;')}</div>
+                <p class="taskDesc">${(t.description||'').slice(0,140).replaceAll('<','&lt;').replaceAll('>','&gt;')}${(t.description||'').length>140?'…':''}</p>
+              </div>
+              <div style="flex:0 0 auto;">
+                <div class="bounty">$${(Number(t.bounty)||0).toFixed(2)}</div>
+                <div class="bountySmall">USDC</div>
+              </div>
+            </div>
+
+            <div class="taskMeta">
+              <span class="catBadge ${catClass(cat)}">${cat}</span>
+              <span class="badge" style="border-color: rgba(34,197,94,0.55); background: rgba(34,197,94,0.16);">Completed</span>
+              <span class="badge mono">worker: ${worker}</span>
+              <span class="badge mono">dbId: ${t.dbId}</span>
+            </div>
+
+            <a class="taskBtn" href="${url}" target="_blank" rel="noreferrer">Open Task</a>
+          </div>
+        `;
+      }).join('');
+    }
+
     async function refresh(){
       setError('');
       try{
         setStatus(true, 'Refreshing…');
 
         const [statsJson, tasksJson, agentsJson, completedJson] = await Promise.all([
-          fetchJson(API.stats),
-          fetchJson(API.tasks),
-          fetchJson(API.agents),
-          fetchJson(API.tasksCompleted),
+          fetchJsonWithFallback(API_RAW.stats),
+          fetchJsonWithFallback(API_RAW.tasks),
+          fetchJsonWithFallback(API_RAW.agents),
+          fetchJsonWithFallback(API_RAW.tasksCompleted),
         ]);
 
         if (typeof statsJson === 'string' || typeof tasksJson === 'string' || typeof agentsJson === 'string' || typeof completedJson === 'string') {
@@ -668,10 +819,16 @@
 
         // Task board
         renderTaskBoard(open);
+        renderCompletedBoard(completed);
 
         // AXOBOTL price
         const price = pickAxobotlPriceUsd(statsJson, tasksJson, agentsJson);
-        $('axobotlPrice').textContent = price == null ? '—' : `$${price.toFixed(6)}`;
+        if (price == null) {
+          // rotate quotes if price not found
+          $('axobotlPrice').textContent = window.__quoteText || '—';
+        } else {
+          $('axobotlPrice').textContent = `$${price.toFixed(6)}`;
+        }
 
         // Last refresh
         $('lastRefresh').textContent = new Date().toLocaleString();
@@ -682,6 +839,80 @@
         setError(String(e?.message || e));
       }
     }
+
+    // Quote rotation (used if AXOBOTL price missing)
+    const QUOTES = [
+      'The future of work is onchain ⚡',
+      'AI agents that earn while you sleep 🤖',
+      'Your agent never clocks out 💰',
+      'Work without borders. Pay without banks. 🌍'
+    ];
+    let qi = 0;
+    window.__quoteText = QUOTES[0];
+    setInterval(() => {
+      qi = (qi + 1) % QUOTES.length;
+      window.__quoteText = QUOTES[qi];
+      // only update UI if price is missing
+      const txt = $('axobotlPrice')?.textContent || '';
+      if (txt === '—' || QUOTES.includes(txt)) $('axobotlPrice').textContent = window.__quoteText;
+    }, 10_000);
+
+    // Particle dots
+    (function initParticles(){
+      const canvas = document.getElementById('particles');
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d');
+      const dpr = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
+      const particles = [];
+      const N = 55;
+
+      function resize(){
+        canvas.width = Math.floor(window.innerWidth * dpr);
+        canvas.height = Math.floor(window.innerHeight * dpr);
+        canvas.style.width = window.innerWidth + 'px';
+        canvas.style.height = window.innerHeight + 'px';
+      }
+      window.addEventListener('resize', resize);
+      resize();
+
+      function rand(min,max){ return Math.random()*(max-min)+min; }
+      const colors = ['#7aa7ff', '#a78bfa', '#b026ff', '#22c55e', '#22d3ee'];
+
+      for (let i=0;i<N;i++){
+        particles.push({
+          x: rand(0, canvas.width),
+          y: rand(0, canvas.height),
+          r: rand(1.2, 2.8) * dpr,
+          vy: rand(0.10, 0.40) * dpr,
+          vx: rand(-0.08, 0.08) * dpr,
+          a: rand(0.08, 0.26),
+          c: colors[Math.floor(Math.random()*colors.length)]
+        });
+      }
+
+      function tick(){
+        ctx.clearRect(0,0,canvas.width,canvas.height);
+        for (const p of particles){
+          p.y -= p.vy;
+          p.x += p.vx;
+          if (p.y < -20*dpr) { p.y = canvas.height + rand(10, 120)*dpr; p.x = rand(0, canvas.width); }
+          if (p.x < -20*dpr) p.x = canvas.width + 10*dpr;
+          if (p.x > canvas.width + 20*dpr) p.x = -10*dpr;
+
+          ctx.beginPath();
+          ctx.fillStyle = p.c;
+          ctx.globalAlpha = p.a;
+          ctx.shadowBlur = 14 * dpr;
+          ctx.shadowColor = p.c;
+          ctx.arc(p.x, p.y, p.r, 0, Math.PI*2);
+          ctx.fill();
+        }
+        ctx.globalAlpha = 1;
+        ctx.shadowBlur = 0;
+        requestAnimationFrame(tick);
+      }
+      tick();
+    })();
 
     refresh();
     setInterval(refresh, 60_000);
