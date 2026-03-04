@@ -13,7 +13,8 @@
       --text:rgba(255,255,255,0.92);
       --muted:rgba(255,255,255,0.65);
       --muted2:rgba(255,255,255,0.50);
-      --brand:#6ea8fe;
+      --brand:#7aa7ff;
+      --accent:#a78bfa;
       --good:#2A9D8F;
       --warn:#F2C94C;
       --bad:#C1121F;
@@ -63,7 +64,7 @@
     }
 
     .card{
-      background: var(--panel);
+      background: linear-gradient(180deg, rgba(255,255,255,0.07), rgba(255,255,255,0.045));
       border: 1px solid var(--border);
       border-radius: 14px;
       box-shadow: var(--shadow);
@@ -136,9 +137,68 @@
     .footer{ margin-top:12px; color: var(--muted2); font-size:12px; }
     .footer code{ font-family:var(--mono); }
 
-    .taskDesc{ color: rgba(255,255,255,0.86); }
-    .taskMeta{ color: var(--muted2); font-size:12px; margin-top:6px; display:flex; gap:10px; flex-wrap:wrap; }
-    .taskCard{ padding:12px; border:1px solid rgba(255,255,255,0.10); border-radius:12px; background: rgba(0,0,0,0.18); }
+    .taskCard{
+      padding: 14px;
+      border: 1px solid rgba(255,255,255,0.10);
+      border-radius: 14px;
+      background: linear-gradient(180deg, rgba(0,0,0,0.20), rgba(0,0,0,0.12));
+      transition: transform 140ms ease, border-color 140ms ease, background 140ms ease;
+    }
+    .taskCard:hover{
+      transform: translateY(-2px);
+      border-color: rgba(110,168,254,0.40);
+      background: linear-gradient(180deg, rgba(0,0,0,0.25), rgba(0,0,0,0.12));
+    }
+
+    .taskTitle{ font-weight: 800; letter-spacing: -0.01em; margin: 0 0 8px; color: rgba(255,255,255,0.94); }
+    .taskDesc{ color: rgba(255,255,255,0.78); font-size: 13px; line-height: 1.35; margin: 0; }
+
+    .taskTop{ display:flex; justify-content:space-between; gap:10px; align-items:flex-start; }
+
+    .bounty{
+      font-size: 22px;
+      font-weight: 900;
+      color: rgba(42,157,143,1);
+      letter-spacing: -0.02em;
+      text-align: right;
+      white-space: nowrap;
+    }
+    .bountySmall{ font-size: 12px; color: rgba(255,255,255,0.55); font-weight: 700; text-align:right; }
+
+    .taskMeta{ color: var(--muted2); font-size:12px; margin-top:10px; display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
+
+    .catBadge{
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 800;
+      border: 1px solid rgba(255,255,255,0.12);
+      color: rgba(255,255,255,0.92);
+      background: rgba(255,255,255,0.06);
+    }
+    .cat-social{ background: rgba(155,89,182,0.22); border-color: rgba(155,89,182,0.40);}      /* purple */
+    .cat-creative{ background: rgba(193,18,31,0.18); border-color: rgba(193,18,31,0.40);}    /* red */
+    .cat-writing{ background: rgba(46,134,193,0.18); border-color: rgba(46,134,193,0.40);}    /* blue */
+    .cat-research{ background: rgba(42,157,143,0.18); border-color: rgba(42,157,143,0.40);}   /* green */
+    .cat-code{ background: rgba(242,201,76,0.18); border-color: rgba(242,201,76,0.45);}       /* yellow */
+
+    .taskBtn{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      gap:8px;
+      margin-top: 12px;
+      width: 100%;
+      padding: 10px 12px;
+      border-radius: 12px;
+      border: 1px solid rgba(110,168,254,0.40);
+      background: linear-gradient(180deg, rgba(110,168,254,0.22), rgba(47,123,246,0.16));
+      color: rgba(255,255,255,0.92);
+      font-weight: 800;
+      cursor: pointer;
+      text-decoration: none;
+    }
+    .taskBtn:hover{ text-decoration:none; background: linear-gradient(180deg, rgba(110,168,254,0.30), rgba(47,123,246,0.20)); }
 
     .taskGrid{
       display:grid;
@@ -161,6 +221,9 @@
       <div class="rightMeta">
         <div class="pill"><span class="dot"></span><span id="statusText">Loading…</span></div>
         <div class="pill">Last refresh: <span class="mono" id="lastRefresh">—</span></div>
+        <div class="pill" title="GitHub Pages cannot call api.0xwork.org directly due to CORS. This dashboard routes API requests through https://corsproxy.io to fetch live data.">
+          Data source: <span class="mono">api.0xwork.org</span> <span class="mono">(via corsproxy.io)</span>
+        </div>
       </div>
     </div>
 
@@ -283,19 +346,19 @@
     }
 
     function pickAxobotlPriceUsd(stats, tasks, agents){
-      // Best-effort: some endpoints include axobotlPriceUsd.
-      const candidates = [
-        stats?.axobotlPriceUsd,
-        tasks?.axobotlPriceUsd,
-        agents?.axobotlPriceUsd,
-      ];
+      // Preferred source (per your requirement): each task object has axobotlPriceUsd.
+      const items = tasks?.tasks || [];
+      for (const t of items){
+        const v = t?.axobotlPriceUsd;
+        if (typeof v === 'number' && Number.isFinite(v)) return v;
+        if (typeof v === 'string' && v.trim() && !Number.isNaN(Number(v))) return Number(v);
+      }
+      // Fallbacks
+      const candidates = [stats?.axobotlPriceUsd, tasks?.axobotlPriceUsd, agents?.axobotlPriceUsd];
       for (const c of candidates){
-        if (typeof c === 'number') return c;
+        if (typeof c === 'number' && Number.isFinite(c)) return c;
         if (typeof c === 'string' && c.trim() && !Number.isNaN(Number(c))) return Number(c);
       }
-      // Sometimes tasks/agents return it inside each item; use first.
-      const t0 = tasks?.tasks?.[0];
-      if (t0 && typeof t0.axobotlPriceUsd === 'number') return t0.axobotlPriceUsd;
       return null;
     }
 
@@ -311,6 +374,7 @@
         deadline: t.deadline,
         poster: t.poster_address,
         worker: t.worker_address,
+        minFollowers: t.min_followers,
         contractVersion: t.contract_version,
         createdAt: t.created_at,
       }));
@@ -394,6 +458,32 @@
       }).join('');
     }
 
+    function extractTitleAndFollowerReq(task){
+      // Title: first sentence or quoted string from description
+      const desc = task.description || '';
+      const quoted = desc.match(/^[\"“](.*?)[\"”]/);
+      const firstSentence = desc.split(/\.(\s|$)/)[0];
+      const title = (quoted?.[1] || firstSentence || 'Task').trim();
+
+      // Follower requirement: prefer minFollowers; else parse patterns like "10K+ Followers" / "25K+"
+      let followers = task.minFollowers != null ? String(task.minFollowers) : null;
+      if (!followers) {
+        const m = desc.match(/(\d+[\.,]?\d*)\s*([kKmM])\+?\s*Followers/i);
+        if (m) followers = `${m[1]}${m[2].toUpperCase()}+ followers`;
+      }
+      return { title, followers };
+    }
+
+    function catClass(category){
+      const c = String(category || '').toLowerCase();
+      if (c === 'social') return 'cat-social';
+      if (c === 'creative') return 'cat-creative';
+      if (c === 'writing') return 'cat-writing';
+      if (c === 'research') return 'cat-research';
+      if (c === 'code') return 'cat-code';
+      return '';
+    }
+
     function renderTaskBoard(openTasks){
       const board = $('taskBoard');
       if (!openTasks.length){
@@ -401,30 +491,35 @@
         return;
       }
 
-      // Sort by bounty desc then newest
       const sorted = [...openTasks].sort((a,b)=> (b.bounty-a.bounty));
 
       board.innerHTML = sorted.map(t => {
-        const url = `https://www.0xwork.org/tasks/${t.dbId}`;
-        const shortDesc = t.description.length > 220 ? t.description.slice(0, 220) + '…' : t.description;
-        const badge = `<span class="badge">$${t.bounty.toFixed(2)} USDC</span>`;
+        const url = `https://0xwork.org/tasks/${t.dbId}`;
+        const { title, followers } = extractTitleAndFollowerReq(t);
+        const shortDesc = (t.description || '').length > 180 ? (t.description || '').slice(0, 180) + '…' : (t.description || '');
+        const cat = t.category || 'Unknown';
+
         return `
           <div class="taskCard">
-            <div style="display:flex; justify-content:space-between; gap:10px; align-items:flex-start;">
-              <div>
-                <div class="taskDesc">${shortDesc.replaceAll('<','&lt;').replaceAll('>','&gt;')}</div>
-                <div class="taskMeta">
-                  <span class="badge">${t.category}</span>
-                  <span class="badge">on-chain #${t.chainTaskId ?? '—'}</span>
-                  <span class="badge">${t.contractVersion || '—'}</span>
-                </div>
+            <div class="taskTop">
+              <div style="min-width:0;">
+                <div class="taskTitle">${title.replaceAll('<','&lt;').replaceAll('>','&gt;')}</div>
+                <p class="taskDesc">${shortDesc.replaceAll('<','&lt;').replaceAll('>','&gt;')}</p>
               </div>
-              <div style="flex:0 0 auto; text-align:right;">${badge}</div>
+              <div style="flex:0 0 auto;">
+                <div class="bounty">$${(Number(t.bounty)||0).toFixed(2)}</div>
+                <div class="bountySmall">USDC bounty</div>
+              </div>
             </div>
-            <div class="taskMeta" style="margin-top:10px;">
-              <a href="${url}" target="_blank" rel="noreferrer">Open task</a>
-              <span class="mono">dbId: ${t.dbId}</span>
+
+            <div class="taskMeta">
+              <span class="catBadge ${catClass(cat)}">${cat}</span>
+              <span class="badge">on-chain #${t.chainTaskId ?? '—'}</span>
+              <span class="badge mono">dbId: ${t.dbId}</span>
+              ${followers ? `<span class="badge">${followers}</span>` : ''}
             </div>
+
+            <a class="taskBtn" href="${url}" target="_blank" rel="noreferrer">Open Task</a>
           </div>
         `;
       }).join('');
