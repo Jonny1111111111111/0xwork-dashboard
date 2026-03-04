@@ -240,6 +240,7 @@
     const CORS_PROXY = 'https://corsproxy.io/?url=';
     const API = {
       tasks: CORS_PROXY + encodeURIComponent('https://api.0xwork.org/tasks'),
+      tasksCompleted: CORS_PROXY + encodeURIComponent('https://api.0xwork.org/tasks?status=Completed'),
       agents: CORS_PROXY + encodeURIComponent('https://api.0xwork.org/agents'),
       stats: CORS_PROXY + encodeURIComponent('https://api.0xwork.org/stats'),
     };
@@ -309,6 +310,7 @@
         status: t.status || 'Unknown',
         deadline: t.deadline,
         poster: t.poster_address,
+        worker: t.worker_address,
         contractVersion: t.contract_version,
         createdAt: t.created_at,
       }));
@@ -328,10 +330,20 @@
       }));
     }
 
-    function renderLeaderboard(agents){
+    function renderLeaderboard(agents, earnedByOperator){
       const rows = $('agentRows');
-      const top = [...agents]
-        .sort((a,b) => (b.tasksCompleted - a.tasksCompleted) || (b.totalEarned - a.totalEarned))
+
+      const withEarned = agents.map(a => {
+        const op = (a.operator || '').toLowerCase();
+        const computed = earnedByOperator?.get(op);
+        return {
+          ...a,
+          totalEarnedComputed: typeof computed === 'number' ? computed : null,
+        };
+      });
+
+      const top = [...withEarned]
+        .sort((a,b) => (b.tasksCompleted - a.tasksCompleted) || ((b.totalEarnedComputed ?? b.totalEarned) - (a.totalEarnedComputed ?? a.totalEarned)))
         .slice(0, 10);
 
       if (!top.length){
@@ -341,6 +353,8 @@
 
       rows.innerHTML = top.map((a, idx) => {
         const op = a.operator ? `${a.operator.slice(0,6)}…${a.operator.slice(-4)}` : '—';
+        const earned = a.totalEarnedComputed ?? a.totalEarned ?? 0;
+        const note = a.totalEarnedComputed != null ? '<span class="small">computed</span>' : '<span class="small">api</span>';
         return `
           <tr>
             <td class="mono">${idx+1}</td>
@@ -349,7 +363,7 @@
               <div class="small">${op}</div>
             </td>
             <td><span class="badge">${fmtNum(a.tasksCompleted)}</span></td>
-            <td class="mono">${a.totalEarned ? a.totalEarned : 0}</td>
+            <td class="mono">${earned.toFixed ? earned.toFixed(2) : earned} ${note}</td>
           </tr>
         `;
       }).join('');
@@ -421,13 +435,14 @@
       try{
         setStatus(true, 'Refreshing…');
 
-        const [statsJson, tasksJson, agentsJson] = await Promise.all([
+        const [statsJson, tasksJson, agentsJson, completedJson] = await Promise.all([
           fetchJson(API.stats),
           fetchJson(API.tasks),
           fetchJson(API.agents),
+          fetchJson(API.tasksCompleted),
         ]);
 
-        if (typeof statsJson === 'string' || typeof tasksJson === 'string' || typeof agentsJson === 'string') {
+        if (typeof statsJson === 'string' || typeof tasksJson === 'string' || typeof agentsJson === 'string' || typeof completedJson === 'string') {
           throw new Error('API proxy returned non-JSON. Try again or switch proxy.');
         }
 
@@ -444,7 +459,19 @@
         $('openBountySum').textContent = `Σ $${openSum.toFixed(2)}`;
 
         const agents = normalizeAgents(agentsJson);
-        renderLeaderboard(agents);
+
+        // Compute accurate earned per agent by summing bounty amounts of completed tasks by worker address.
+        const completed = normalizeTasks(completedJson);
+        const earnedByOperator = new Map();
+        for (const t of completed) {
+          if (!t.worker) continue;
+          const op = String(t.worker).toLowerCase();
+          const amt = Number(t.bounty || 0);
+          if (!Number.isFinite(amt)) continue;
+          earnedByOperator.set(op, (earnedByOperator.get(op) || 0) + amt);
+        }
+
+        renderLeaderboard(agents, earnedByOperator);
 
         // Categories (prefer open tasks)
         let catCounts = countByCategory(open);
