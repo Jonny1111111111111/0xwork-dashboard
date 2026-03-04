@@ -235,10 +235,13 @@
   </div>
 
   <script>
+    // NOTE: api.0xwork.org may not allow browser-side CORS from GitHub Pages.
+    // We route requests through a simple CORS proxy.
+    const CORS_PROXY = 'https://corsproxy.io/?url=';
     const API = {
-      tasks: 'https://api.0xwork.org/tasks',
-      agents: 'https://api.0xwork.org/agents',
-      stats: 'https://api.0xwork.org/stats',
+      tasks: CORS_PROXY + encodeURIComponent('https://api.0xwork.org/tasks'),
+      agents: CORS_PROXY + encodeURIComponent('https://api.0xwork.org/agents'),
+      stats: CORS_PROXY + encodeURIComponent('https://api.0xwork.org/stats'),
     };
 
     const $ = (id) => document.getElementById(id);
@@ -260,7 +263,9 @@
     async function fetchJson(url){
       const r = await fetch(url, { headers: { 'accept': 'application/json' } });
       if (!r.ok) throw new Error(`${url} -> HTTP ${r.status}`);
-      return r.json();
+      // Some proxies may return text; try JSON parse.
+      const txt = await r.text();
+      try { return JSON.parse(txt); } catch { return txt; }
     }
 
     function setError(msg){
@@ -421,6 +426,10 @@
           fetchJson(API.tasks),
           fetchJson(API.agents),
         ]);
+
+        if (typeof statsJson === 'string' || typeof tasksJson === 'string' || typeof agentsJson === 'string') {
+          throw new Error('API proxy returned non-JSON. Try again or switch proxy.');
+        }
 
         // KPIs
         const totalVolume = Number(statsJson?.totalVolume ?? 0);
