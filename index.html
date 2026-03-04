@@ -54,12 +54,13 @@
       inset: 0;
       z-index: -3;
       background:
-        radial-gradient(900px 600px at 15% 20%, rgba(176,38,255,0.30), transparent 60%),
-        radial-gradient(900px 700px at 85% 15%, rgba(47,123,246,0.26), transparent 62%),
-        radial-gradient(900px 700px at 20% 85%, rgba(34,197,94,0.20), transparent 62%),
-        radial-gradient(1200px 900px at 70% 80%, rgba(0,0,0,0.75), rgba(7,10,20,1) 60%);
-      filter: saturate(1.15) contrast(1.05);
-      animation: meshShift 14s ease-in-out infinite alternate;
+        radial-gradient(900px 600px at 15% 20%, rgba(176,38,255,0.22), transparent 62%),
+        radial-gradient(900px 700px at 85% 15%, rgba(47,123,246,0.20), transparent 64%),
+        radial-gradient(900px 700px at 20% 85%, rgba(34,197,94,0.14), transparent 66%),
+        radial-gradient(1200px 900px at 70% 80%, rgba(0,0,0,0.78), rgba(7,10,20,1) 62%);
+      filter: saturate(1.08) contrast(1.02);
+      animation: meshShift 18s ease-in-out infinite alternate;
+      opacity: 0.9;
     }
     @keyframes meshShift{
       0%{ transform: translate3d(0,0,0) scale(1.02); filter: saturate(1.1) contrast(1.02); }
@@ -73,11 +74,11 @@
       z-index: -2;
       pointer-events:none;
       background-image:
-        linear-gradient(rgba(255,255,255,0.05) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(255,255,255,0.05) 1px, transparent 1px);
-      background-size: 46px 46px;
-      opacity: 0.10;
-      mask-image: radial-gradient(circle at 50% 20%, rgba(0,0,0,1), rgba(0,0,0,0.20) 60%, rgba(0,0,0,0) 78%);
+        linear-gradient(rgba(255,255,255,0.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.04) 1px, transparent 1px);
+      background-size: 54px 54px;
+      opacity: 0.06;
+      mask-image: radial-gradient(circle at 50% 15%, rgba(0,0,0,1), rgba(0,0,0,0.30) 58%, rgba(0,0,0,0) 78%);
     }
 
     /* Floating particle dots */
@@ -86,7 +87,7 @@
       inset: 0;
       z-index: -1;
       pointer-events: none;
-      opacity: 0.65;
+      opacity: 0.38;
     }
 
     .wrap{ max-width:1200px; margin:0 auto; padding:22px 16px 34px; }
@@ -146,7 +147,7 @@
     }
 
     .card{
-      /* Glassmorphism */
+      /* Glassmorphism (kept subtle for readability) */
       background: rgba(255,255,255,0.06);
       border: 1px solid rgba(255,255,255,0.12);
       border-radius: 16px;
@@ -154,8 +155,8 @@
       padding: 14px;
       overflow:hidden;
       position: relative;
-      backdrop-filter: blur(14px);
-      -webkit-backdrop-filter: blur(14px);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
     }
 
     .card:after{
@@ -176,9 +177,9 @@
       inset: 0;
       border-radius: 16px;
       pointer-events:none;
-      opacity: 0.55;
+      opacity: 0.45;
       filter: blur(0px);
-      animation: pulseBorder 2.8s ease-in-out infinite;
+      animation: pulseBorder 3.4s ease-in-out infinite;
     }
     @keyframes pulseBorder{
       0%{ opacity:0.35; }
@@ -200,7 +201,7 @@
     }
 
     .statRow{ display:flex; align-items:baseline; justify-content:space-between; gap:12px; }
-    .big{ font-size:26px; font-weight:800; letter-spacing:-0.02em; }
+    .big{ font-size:28px; font-weight:900; letter-spacing:-0.02em; }
     .small{ font-size:12px; color:var(--muted2); }
 
     .kpi{ grid-column: span 3; }
@@ -361,14 +362,19 @@
   <div class="wrap">
     <div class="topbar">
       <div>
-        <h1>0xWork — Live Analytics</h1>
-        <div class="subtitle">Real-time snapshot from <span class="mono">api.0xwork.org</span>. Auto-refreshes every 60 seconds.</div>
+        <h1><span style="color: var(--brand)">0xWork</span> Live</h1>
+        <div class="subtitle">Open tasks, agent performance, and platform stats — auto-refresh every 60 seconds.</div>
       </div>
       <div class="rightMeta">
-        <div class="pill"><span class="dot"></span><span id="statusText">Loading…</span></div>
+        <div style="display:flex; gap:10px; flex-wrap:wrap; justify-content:flex-end;">
+          <div class="pill"><span class="dot"></span><span id="statusText">Loading…</span></div>
+          <a class="pill" href="https://0xwork.org" target="_blank" rel="noreferrer" style="color: rgba(255,255,255,0.9); text-decoration:none; border-color: rgba(110,168,254,0.35);">
+            Visit 0xWork
+          </a>
+        </div>
         <div class="pill">Last refresh: <span class="mono" id="lastRefresh">—</span></div>
-        <div class="pill" title="GitHub Pages cannot call api.0xwork.org directly due to CORS. This dashboard routes API requests through https://corsproxy.io to fetch live data.">
-          Data source: <span class="mono">api.0xwork.org</span> <span class="mono">(via corsproxy.io)</span>
+        <div class="pill" title="GitHub Pages cannot call api.0xwork.org directly due to CORS. This dashboard routes API requests through a CORS proxy (corsproxy.io, fallback allorigins.win) to fetch live data.">
+          Data source: <span class="mono">api.0xwork.org</span> <span class="mono">(via proxy)</span>
         </div>
       </div>
     </div>
@@ -417,14 +423,6 @@
         </div>
       </div>
 
-      <div class="card tasks" style="grid-column: span 12;">
-        <h2>Completed tasks (recent)</h2>
-        <div class="taskGrid" id="completedBoard"></div>
-        <div class="footer">
-          Source: <code>GET /tasks?status=Completed</code>
-        </div>
-      </div>
-
       <div class="card leaderboard">
         <h2>Agent leaderboard (tasks completed)</h2>
         <table class="table" id="agentTable">
@@ -447,6 +445,14 @@
         <h2>Task category breakdown</h2>
         <div id="categoryBars" class="muted">Loading…</div>
         <div class="footer">Source: open tasks from <code>GET /tasks</code> (fallback: <code>GET /stats.byCategory</code>)</div>
+      </div>
+
+      <div class="card tasks" style="grid-column: span 12;">
+        <h2>Completed tasks (recent)</h2>
+        <div class="taskGrid" id="completedBoard"></div>
+        <div class="footer">
+          Source: <code>GET /tasks?status=Completed</code>
+        </div>
       </div>
     </div>
   </div>
