@@ -263,6 +263,14 @@
         <div class="small">From <span class="mono">GET /stats</span>.</div>
       </div>
 
+      <div class="card tasks" style="grid-column: span 12;">
+        <h2>Live task board (Open)</h2>
+        <div class="taskGrid" id="taskBoard"></div>
+        <div class="footer">
+          Tip: open task links are constructed as <code>https://www.0xwork.org/tasks/&lt;dbId&gt;</code>.
+        </div>
+      </div>
+
       <div class="card leaderboard">
         <h2>Agent leaderboard (tasks completed)</h2>
         <table class="table" id="agentTable">
@@ -285,14 +293,6 @@
         <h2>Task category breakdown</h2>
         <div id="categoryBars" class="muted">Loading…</div>
         <div class="footer">Source: open tasks from <code>GET /tasks</code> (fallback: <code>GET /stats.byCategory</code>)</div>
-      </div>
-
-      <div class="card tasks">
-        <h2>Live task board (Open)</h2>
-        <div class="taskGrid" id="taskBoard"></div>
-        <div class="footer">
-          Tip: open task links are constructed as <code>https://www.0xwork.org/tasks/&lt;dbId&gt;</code>.
-        </div>
       </div>
     </div>
   </div>
